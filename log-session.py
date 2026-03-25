@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from collections import Counter
 
+LOG_DIR = Path.home() / ".claude" / "session-logs"
+
 
 def parse_transcript(transcript_path: str) -> dict:
     """Parse a Claude Code transcript JSONL and extract session metrics."""
@@ -157,9 +159,8 @@ def main():
         "elapsed_human": _format_duration(metrics["elapsed_seconds"]),
     }
 
-    log_dir = Path.home() / ".claude" / "session-logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"{now.strftime('%Y-%m-%d')}.jsonl"
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_file = LOG_DIR / f"{now.strftime('%Y-%m-%d')}.jsonl"
 
     try:
         with open(log_file, "a", encoding="utf-8") as f:

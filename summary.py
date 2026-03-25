@@ -18,6 +18,11 @@ from pathlib import Path
 
 
 LOG_DIR = Path.home() / ".claude" / "session-logs"
+DEFAULT_DAYS = 7
+PROMPT_PREVIEW_LENGTH = 120
+HIGH_TURN_DISPLAY_LIMIT = 5
+HIGH_TURN_MULTIPLIER = 1.5
+HIGH_TURN_MIN_THRESHOLD = 3
 
 
 def load_sessions(date_from: str, date_to: str) -> list[dict]:
@@ -106,16 +111,16 @@ def print_summary(sessions: list[dict], date_from: str, date_to: str, verbose: b
 
     # High-turn sessions (potential prompt quality issues)
     high_turn = sorted(sessions, key=lambda s: s.get("turn_count", 0), reverse=True)
-    threshold = max(3, int(avg_turns * 1.5))
+    threshold = max(HIGH_TURN_MIN_THRESHOLD, int(avg_turns * HIGH_TURN_MULTIPLIER))
     problem_sessions = [s for s in high_turn if s.get("turn_count", 0) >= threshold]
     if problem_sessions:
         print(f"--- High-Turn Sessions (>= {threshold} turns) ---")
-        for s in problem_sessions[:5]:
+        for s in problem_sessions[:HIGH_TURN_DISPLAY_LIMIT]:
             print(f"  [{s.get('date')}] {s.get('turn_count')} turns, "
                   f"{s.get('elapsed_human', '?')}, {s.get('cwd', '?')}")
             if verbose:
                 for i, p in enumerate(s.get("prompts", []), 1):
-                    preview = p[:120] + ("..." if len(p) > 120 else "")
+                    preview = p[:PROMPT_PREVIEW_LENGTH] + ("..." if len(p) > PROMPT_PREVIEW_LENGTH else "")
                     print(f"    {i}. {preview}")
         print()
 
@@ -142,7 +147,7 @@ def main():
     parser = argparse.ArgumentParser(description="Summarize Claude Code session logs")
     parser.add_argument("--from", dest="date_from", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--to", dest="date_to", help="End date (YYYY-MM-DD)")
-    parser.add_argument("--days", type=int, default=7, help="Number of days to look back (default: 7)")
+    parser.add_argument("--days", type=int, default=DEFAULT_DAYS, help=f"Number of days to look back (default: {DEFAULT_DAYS})")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show prompt text")
     args = parser.parse_args()
 

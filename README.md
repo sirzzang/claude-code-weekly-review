@@ -1,10 +1,12 @@
 # claude-code-weekly-review
 
-Claude Code 세션을 자동 기록하고, 주간 회고로 프롬프트 품질을 개선하는 도구.
+Claude Code 세션을 자동 기록하고, 주간 회고로 프롬프트 품질을 개선하는 도구입니다.
 
 ```
 세션 종료 → Stop hook이 메타데이터 기록 → 스킬/CLI로 분석
 ```
+
+<br>
 
 ## Quick Start
 
@@ -14,20 +16,23 @@ cd claude-code-weekly-review
 ./install.sh -y        # 전체 자동 설치 (프롬프트 없이)
 ```
 
-설치 후 Claude Code를 정상 종료하면 로그가 자동으로 쌓인다. 분석은 Claude Code에서 `주간 회고 해줘` 라고 말하면 된다.
+설치 후 Claude Code를 정상 종료하면 로그가 자동으로 쌓입니다. 분석은 Claude Code에서 `주간 회고 해줘` 라고 말하면 됩니다.
 
-## 왜 만들었나
+<br>
 
-Claude Code를 쓰다 보면 프롬프트를 어떻게 쓰는지 돌아볼 기회가 없다.
-"이거 고쳐줘"로 시작해서 5턴 만에 끝나는 세션과, 맥락을 충분히 제공해서 1턴에 끝나는 세션의 차이는 크다.
+## 배경
 
-이 도구는 세 가지를 한다:
+Claude Code를 쓰다 보면 프롬프트를 어떻게 쓰는지 돌아볼 기회가 없습니다. "이거 고쳐줘"로 시작해서 5턴 만에 끝나는 세션과, 맥락을 충분히 제공해서 1턴에 끝나는 세션의 차이는 큽니다. 이 차이를 인식하고 싶었고, 더 나아가 프롬프팅 습관을 장기적으로 추적하여 개선하고 싶었습니다.
 
-1. **Stop hook**으로 모든 세션의 메타데이터를 자동 기록한다 (프롬프트 원문, 도구 사용 횟수, 소요 시간).
-2. **주간 회고 스킬**로 누적된 로그를 분석하여 프롬프팅 습관의 개선점을 도출한다.
-3. **상세 분석 스킬**로 비정상 세션을 개별 식별하고, 턴 단위로 Before/After 개선안을 제시한다.
+습관 분석에는 시계열 데이터가 전제됩니다. 그래서 Stop hook으로 매 세션의 메타데이터를 자동으로 쌓아두고, 일정 기간 단위로 되돌아볼 수 있는 구조를 만들었습니다. command 타입 hook 기반이라 LLM 호출이 없고, 추가 토큰 비용이 발생하지 않습니다.
 
-command 타입 hook이라 LLM 호출이 없고, 추가 토큰 비용이 발생하지 않는다.
+이 도구는 세 가지를 합니다:
+
+1. **Stop hook** — 모든 세션의 메타데이터를 자동 기록합니다 (프롬프트 원문, 도구 사용 횟수, 소요 시간).
+2. **주간 회고 스킬** — 누적 로그를 기간별로 분석하여 프롬프팅 습관의 개선점을 도출합니다.
+3. **상세 분석 스킬** — 비정상 세션을 개별 식별하고, 턴 단위 Before/After 개선안을 제시합니다.
+
+<br>
 
 ## 동작 흐름
 
@@ -53,6 +58,23 @@ Claude Code 세션 종료
  주간회고 상세분석  summary.py
 ```
 
+### 기존 transcript를 활용하지 않는 이유
+
+Claude Code는 이미 모든 대화를 `~/.claude/projects/<project-hash>/<session-id>.jsonl`에 저장하고 있습니다. 유저 프롬프트, 어시스턴트 응답, tool_use 블록 등 전체 턴이 그대로 들어있으므로, 원한다면 직접 파싱해서 분석할 수 있습니다.
+
+다만 습관 분석 용도로는 몇 가지 불편한 점이 있습니다:
+
+| | raw transcript | hook이 만드는 로그 |
+|---|---|---|
+| 구조 | 프로젝트별 디렉토리, 세션별 파일 | 날짜별 JSONL, 세션당 1줄 |
+| 내용 | 전체 대화 (응답, tool 결과 포함) | 메타데이터만 (프롬프트, 도구 횟수, 시간) |
+| 크기 | 세션당 수백 KB ~ 수 MB | 세션당 수백 바이트 |
+| 시계열 조회 | 파일 mtime 기반으로 직접 필터링 필요 | 날짜별 파일이라 바로 range query 가능 |
+
+hook의 역할은 거대한 raw transcript에서 습관 분석에 필요한 시그널만 추출해서 시계열로 정리해두는 것입니다.
+
+<br>
+
 ## 구조
 
 ```
@@ -66,15 +88,19 @@ claude-code-weekly-review/
 └── uninstall.sh                # 제거 스크립트
 ```
 
+<be>
+
 ## 요구 사항
 
 - Claude Code v1.0.41 이상 (Stop hook 지원)
 - Python 3.10+
 - jq (선택, settings.json 자동 병합에 사용)
 
+<br>
+
 ## 설치
 
-> 전역 설치(`~/.claude/`)로, 설치 후 모든 프로젝트의 Claude Code 세션에 적용된다.
+> 전역 설치(`~/.claude/`)로, 설치 후 모든 프로젝트의 Claude Code 세션에 적용됩니다.
 
 ### 자동 설치
 
@@ -89,13 +115,13 @@ cd claude-code-weekly-review
 | (없음) | 스킬마다 설치 여부를 Y/n으로 확인 |
 | `-y`, `--yes` | 모든 스킬을 확인 없이 자동 설치 |
 
-설치 스크립트가 아래 작업을 수행한다:
+설치 스크립트가 아래 작업을 수행합니다:
 
 1. `~/.claude/hooks/log-session.py` 배치
 2. `~/.claude/settings.json`에 Stop hook 등록 (기존 설정 보존)
 3. 스킬 설치 (weekly-review, prompt-deep-dive)
 
-완료 후 설치된 파일 목록, 디렉토리 구조, 테스트 방법이 출력된다.
+완료 후 설치된 파일 목록, 디렉토리 구조, 테스트 방법이 출력됩니다.
 
 <details>
 <summary>install.sh -y 출력 예시</summary>
@@ -145,11 +171,11 @@ cd claude-code-weekly-review
 
   1. Hook 등록 확인
      아무 디렉토리에서나 Claude Code를 열고 /hooks 입력
-     -> Stop hook에 log-session.py가 보여야 한다
+     -> Stop hook에 log-session.py가 보여야 합니다
      (전역 설정이므로 어느 디렉토리에서 확인해도 동일)
 
   2. 로그 생성 확인
-     Claude Code 세션을 하나 열고 아무 질문 후 정상 종료한다
+     Claude Code 세션을 하나 열고 아무 질문 후 정상 종료합니다
      그 다음 확인:
      ls ~/.claude/session-logs/
      cat ~/.claude/session-logs/2026-03-26.jsonl
@@ -175,8 +201,8 @@ cp log-session.py ~/.claude/hooks/log-session.py
 chmod +x ~/.claude/hooks/log-session.py
 
 # 2. settings.json에 hook 등록
-# 기존 settings.json이 있으면 hooks.Stop 항목만 병합한다.
-# 없으면 settings.example.json을 참고하여 생성한다.
+# 기존 settings.json이 있으면 hooks.Stop 항목만 병합합니다.
+# 없으면 settings.example.json을 참고하여 생성합니다.
 
 # 3. 스킬 설치 (선택)
 mkdir -p ~/.claude/skills/weekly-review
@@ -186,20 +212,22 @@ mkdir -p ~/.claude/skills/prompt-deep-dive
 cp SKILL-deep-dive.md ~/.claude/skills/prompt-deep-dive/SKILL.md
 ```
 
+<br>
+
 ## 제거
 
 ```bash
 ./uninstall.sh
 ```
 
-제거 스크립트가 아래 작업을 수행한다:
+제거 스크립트가 아래 작업을 수행합니다:
 
 1. `~/.claude/hooks/log-session.py` 삭제
 2. `~/.claude/settings.json`에서 hook 항목만 제거 (다른 설정 보존)
 3. 스킬 디렉토리 삭제 (weekly-review, prompt-deep-dive)
 4. 세션 로그 삭제 여부 선택 (기본 N - 보존)
 
-완료 후 삭제된 항목 목록과 검증 방법이 출력된다.
+완료 후 삭제된 항목 목록과 검증 방법이 출력됩니다.
 
 <details>
 <summary>uninstall.sh 출력 예시</summary>
@@ -235,17 +263,19 @@ cp SKILL-deep-dive.md ~/.claude/skills/prompt-deep-dive/SKILL.md
 
 [Verify]
   아무 디렉토리에서나 Claude Code를 열고 /hooks 입력
-  -> Stop hook에 log-session.py가 없어야 한다
+  -> Stop hook에 log-session.py가 없어야 합니다
   (전역 설정이므로 어느 디렉토리에서 확인해도 동일)
 ```
 
 </details>
 
+<br>
+
 ## 사용법
 
 ### 자동 로깅
 
-설치 후 별도 조작 없이, Claude Code 세션이 정상 종료될 때마다 로그가 저장된다.
+설치 후 별도 조작 없이, Claude Code 세션이 정상 종료될 때마다 로그가 저장됩니다.
 
 ```
 ~/.claude/session-logs/
@@ -256,7 +286,7 @@ cp SKILL-deep-dive.md ~/.claude/skills/prompt-deep-dive/SKILL.md
 
 ### 주간 회고 (스킬)
 
-Claude Code에서 아래와 같이 요청한다:
+Claude Code에서 아래와 같이 요청합니다:
 
 ```
 주간 회고 해줘
@@ -266,7 +296,7 @@ Claude Code에서 아래와 같이 요청한다:
 
 ### 프롬프트 상세 분석 (스킬)
 
-비정상 세션을 식별하고 턴별로 뜯어본다:
+비정상 세션을 식별하고 턴별로 뜯어봅니다:
 
 ```
 비효율 세션 분석해줘
@@ -276,7 +306,7 @@ Claude Code에서 아래와 같이 요청한다:
 
 ### 빠른 요약 (CLI)
 
-스킬 없이 터미널에서 바로 확인할 수 있다:
+스킬 없이 터미널에서 바로 확인할 수 있습니다:
 
 ```bash
 python3 summary.py                                    # 최근 7일
@@ -318,7 +348,7 @@ Total tool use: 342
 
 ## 로그 형식
 
-각 세션은 JSONL 한 줄로 기록된다:
+각 세션은 JSONL 한 줄로 기록됩니다:
 
 ```json
 {
@@ -340,23 +370,23 @@ Total tool use: 342
 
 ## 제한사항
 
-- `Ctrl+C`로 강제 종료한 세션은 Stop hook이 실행되지 않아 로그가 누락될 수 있다.
-- transcript JSONL의 내부 구조는 Claude Code 버전에 따라 변경될 수 있다. 파싱 실패 시 해당 세션은 무시된다.
-- 프롬프트 원문에 민감 정보가 포함될 수 있다. 로그 파일의 접근 권한에 주의한다.
+- `Ctrl+C`로 강제 종료한 세션은 Stop hook이 실행되지 않아 로그가 누락될 수 있습니다.
+- transcript JSONL의 내부 구조는 Claude Code 버전에 따라 변경될 수 있습니다. 파싱 실패 시 해당 세션은 무시됩니다.
+- 프롬프트 원문에 민감 정보가 포함될 수 있습니다. 로그 파일의 접근 권한에 주의해 주세요.
 
 ## 커스텀
 
 ### hook만 쓰고 스킬은 쓰지 않는 경우
 
-`log-session.py`와 `summary.py`만 사용하면 된다. `install.sh` 실행 시 스킬 설치를 n으로 건너뛴다.
+`log-session.py`와 `summary.py`만 사용하면 됩니다. `install.sh` 실행 시 스킬 설치를 n으로 건너뜁니다.
 
 ### 기존 settings.json에 병합
 
-`settings.example.json`을 참고하여 기존 `hooks` 설정에 `Stop` 항목만 추가한다. `install.sh`는 기존 설정을 덮어쓰지 않고 병합을 시도한다.
+`settings.example.json`을 참고하여 기존 `hooks` 설정에 `Stop` 항목만 추가합니다. `install.sh`는 기존 설정을 덮어쓰지 않고 병합을 시도합니다.
 
 ### 로그 보관 기간 설정
 
-기본적으로 로그는 무한 보관된다. 디스크가 우려되면 cron으로 오래된 로그를 정리한다:
+기본적으로 로그는 무한 보관됩니다. 디스크가 우려되면 cron으로 오래된 로그를 정리합니다:
 
 ```bash
 # 30일 이상 된 로그 삭제

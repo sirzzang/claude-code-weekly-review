@@ -18,7 +18,7 @@ Exit codes:
 import json
 import sys
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from collections import Counter
 
@@ -145,7 +145,7 @@ def main():
     if not metrics.get("prompts"):
         sys.exit(0)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now().astimezone()
     log_entry = {
         "timestamp": now.isoformat(),
         "date": now.strftime("%Y-%m-%d"),

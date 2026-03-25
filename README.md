@@ -54,8 +54,8 @@ Claude Code 세션 종료
            │
      ┌─────┼─────────┐
      ▼     ▼         ▼
-  스킬    스킬      CLI
- 주간회고 상세분석  summary.py
+  스킬     스킬       CLI
+ 주간회고  상세분석   summary.py
 ```
 
 ### 기존 transcript를 활용하지 않는 이유
@@ -346,6 +346,8 @@ Total tool use: 342
   ...
 ```
 
+<br>
+
 ## 로그 형식
 
 각 세션은 JSONL 한 줄로 기록됩니다:
@@ -368,11 +370,15 @@ Total tool use: 342
 }
 ```
 
+<br>
+
 ## 제한사항
 
 - `Ctrl+C`로 강제 종료한 세션은 Stop hook이 실행되지 않아 로그가 누락될 수 있습니다.
 - transcript JSONL의 내부 구조는 Claude Code 버전에 따라 변경될 수 있습니다. 파싱 실패 시 해당 세션은 무시됩니다.
 - 프롬프트 원문에 민감 정보가 포함될 수 있습니다. 로그 파일의 접근 권한에 주의해 주세요.
+
+<br>
 
 ## 커스텀
 
@@ -392,6 +398,18 @@ Total tool use: 342
 # 30일 이상 된 로그 삭제
 find ~/.claude/session-logs/ -name "*.jsonl" -mtime +30 -delete
 ```
+
+<br>
+
+## 관련 프로젝트
+
+이 도구는 주간 단위의 습관 변화 추적에 집중합니다. 
+단발성 프롬프트 품질 진단이나 종합 리포트가 필요하다면 아래 프로젝트가 더 적합합니다:
+
+- **[claude-code-prompt-coach-skill](https://github.com/hancengiz/claude-code-prompt-coach-skill)**: Anthropic 베스트 프랙티스 기준으로 프롬프트 품질을 점수화합니다. 토큰 소비량, 도구 활용도, 에러 패턴 등 현재 상태의 전체 스냅샷이 필요할 때 유용합니다.
+- **[Vibe-Log](https://github.com/vibe-log/vibe-log-cli)**: standup 요약, HTML 생산성 리포트, 실시간 프롬프트 코칭 statusline 등 더 풍부한 기능을 제공합니다. 클라우드 대시보드로 장기 추이도 볼 수 있습니다.
+
+<br>
 
 ## License
 

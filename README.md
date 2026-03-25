@@ -97,6 +97,75 @@ cd claude-code-weekly-review
 
 완료 후 설치된 파일 목록, 디렉토리 구조, 테스트 방법이 출력된다.
 
+<details>
+<summary>install.sh -y 출력 예시</summary>
+
+```
+=== Claude Code Weekly Review - Install ===
+
+1/5  Checking prerequisites
+  [OK] python3 found: Python 3.12.4
+
+2/5  Creating directories
+  [OK] Created: ~/.claude/hooks
+  [OK] Created: ~/.claude/session-logs
+
+3/5  Installing hook script
+  [OK] Installed: ~/.claude/hooks/log-session.py
+
+4/5  Configuring settings.json
+  [OK] Created new settings.json from template
+
+5/5  Installing skills
+  [OK] Installed: ~/.claude/skills/weekly-review/SKILL.md
+  [OK] Installed: ~/.claude/skills/prompt-deep-dive/SKILL.md
+
+=== Installation Complete ===
+
+[Installed files]
+  + dir  ~/.claude/hooks
+  + dir  ~/.claude/session-logs
+  + file ~/.claude/hooks/log-session.py
+  + file ~/.claude/settings.json
+  + file ~/.claude/skills/weekly-review/SKILL.md
+  + file ~/.claude/skills/prompt-deep-dive/SKILL.md
+
+[Directory structure]
+  ~/.claude/
+  ├── hooks/
+  │   └── log-session.py          # Stop hook
+  ├── session-logs/                # auto-created on first session
+  ├── skills/weekly-review/
+  │   └── SKILL.md                # weekly review skill
+  ├── skills/prompt-deep-dive/
+  │   └── SKILL.md                # prompt deep dive skill
+  └── settings.json               # hook registered here
+
+[How to test]
+
+  1. Hook 등록 확인
+     아무 디렉토리에서나 Claude Code를 열고 /hooks 입력
+     -> Stop hook에 log-session.py가 보여야 한다
+     (전역 설정이므로 어느 디렉토리에서 확인해도 동일)
+
+  2. 로그 생성 확인
+     Claude Code 세션을 하나 열고 아무 질문 후 정상 종료한다
+     그 다음 확인:
+     ls ~/.claude/session-logs/
+     cat ~/.claude/session-logs/2026-03-26.jsonl
+
+  3. CLI 요약
+     python3 summary.py
+
+  4. 주간 회고 스킬
+     Claude Code에서: 주간 회고 해줘
+
+  5. 상세 분석 스킬
+     Claude Code에서: 비효율 세션 분석해줘
+```
+
+</details>
+
 ### 수동 설치
 
 ```bash
@@ -131,6 +200,46 @@ cp SKILL-deep-dive.md ~/.claude/skills/prompt-deep-dive/SKILL.md
 4. 세션 로그 삭제 여부 선택 (기본 N - 보존)
 
 완료 후 삭제된 항목 목록과 검증 방법이 출력된다.
+
+<details>
+<summary>uninstall.sh 출력 예시</summary>
+
+```
+=== Claude Code Weekly Review - Uninstall ===
+
+1/4  Removing hook script
+  [OK] Removed: ~/.claude/hooks/log-session.py
+
+2/4  Removing hook from settings.json
+  [OK] Removed hook entry from settings.json (other settings preserved)
+
+3/4  Removing skills
+  [OK] Removed: ~/.claude/skills/weekly-review
+  [OK] Removed: ~/.claude/skills/prompt-deep-dive
+
+4/4  Session logs
+  [WARN] Session logs found: ~/.claude/session-logs (3 file(s))
+  Delete all session logs? [y/N] n
+  [OK] Kept: ~/.claude/session-logs
+
+=== Uninstall Complete ===
+
+[Removed]
+  - file ~/.claude/hooks/log-session.py
+  - dir  ~/.claude/skills/weekly-review
+  - dir  ~/.claude/skills/prompt-deep-dive
+  ~ mod  ~/.claude/settings.json
+
+[Skipped]
+  - session logs (user kept)
+
+[Verify]
+  아무 디렉토리에서나 Claude Code를 열고 /hooks 입력
+  -> Stop hook에 log-session.py가 없어야 한다
+  (전역 설정이므로 어느 디렉토리에서 확인해도 동일)
+```
+
+</details>
 
 ## 사용법
 

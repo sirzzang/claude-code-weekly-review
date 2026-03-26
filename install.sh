@@ -47,7 +47,13 @@ echo -e "${BOLD}=== Claude Code Weekly Review - Install ===${NC}"
 step "1/5  Checking prerequisites"
 # -------------------------------------------------------
 if ! command -v python3 &>/dev/null; then
-    error "python3 not found. Please install Python 3.10+."
+    error "python3 not found. Please install Python 3.8+."
+    exit 1
+fi
+
+PY_VERSION=$(python3 -c 'import sys; print(sys.version_info[:2] >= (3, 8))' 2>/dev/null || echo "False")
+if [ "$PY_VERSION" != "True" ]; then
+    error "Python 3.8+ required. Current: $(python3 --version)"
     exit 1
 fi
 info "python3 found: $(python3 --version)"

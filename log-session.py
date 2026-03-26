@@ -15,6 +15,8 @@ Exit codes:
   1 - unexpected error (non-blocking, stderr shown in verbose mode)
 """
 
+from __future__ import annotations
+
 import json
 import sys
 import os

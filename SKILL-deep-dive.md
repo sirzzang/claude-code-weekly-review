@@ -7,10 +7,7 @@ description: 특정 세션을 지정하여 턴 단위로 상세 분석하고 프
 
 주간 회고가 "이번 주 전체의 변화"를 추적한다면, 이 스킬은 "이 세션이 왜 이렇게 됐는가"를 파고든다.
 
-## 전제 조건
-
-- Stop hook(`~/.claude/hooks/log-session.py`)이 설정되어 있어야 한다.
-- 로그 파일은 `~/.claude/session-logs/YYYY-MM-DD.jsonl` 형식으로 존재한다.
+<!-- include:LOG-SPEC -->
 
 ## 진입 방식
 

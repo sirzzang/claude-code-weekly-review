@@ -127,6 +127,25 @@ fi
 # -------------------------------------------------------
 step "5/5  Installing skills"
 # -------------------------------------------------------
+build_skill() {
+    # Replace <!-- include:LOG-SPEC --> with LOG-SPEC.md content
+    local src="$1" tmpfile
+    tmpfile=$(mktemp)
+    if grep -q '<!-- include:LOG-SPEC -->' "$src" && [ -f "$SCRIPT_DIR/LOG-SPEC.md" ]; then
+        awk '
+            /<!-- include:LOG-SPEC -->/ {
+                while ((getline line < spec) > 0) print line
+                close(spec)
+                next
+            }
+            { print }
+        ' spec="$SCRIPT_DIR/LOG-SPEC.md" "$src" > "$tmpfile"
+    else
+        cp "$src" "$tmpfile"
+    fi
+    echo "$tmpfile"
+}
+
 install_skill() {
     local name="$1" src="$2" dest_dir="$3"
     local dest="$dest_dir/SKILL.md"
@@ -139,18 +158,17 @@ install_skill() {
     fi
     if [[ "$answer" =~ ^[Yy]$ ]]; then
         mkdir -p "$dest_dir"
-        if [ -f "$dest" ] && diff -q "$src" "$dest" &>/dev/null; then
+        local built
+        built=$(build_skill "$src")
+        if [ -f "$dest" ] && diff -q "$built" "$dest" &>/dev/null; then
             info "Already up to date: $dest"
             track_skip "$name skill (identical)"
         else
-            cp "$src" "$dest"
+            cp "$built" "$dest"
             track_file "$dest"
-            if [ -f "$dest" ]; then
-                info "Updated: $dest"
-            else
-                info "Installed: $dest"
-            fi
+            info "Installed: $dest"
         fi
+        rm -f "$built"
     else
         track_skip "$name skill (user skipped)"
         info "$name skill installation skipped"

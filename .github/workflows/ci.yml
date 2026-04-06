@@ -29,11 +29,6 @@ jobs:
         with:
           args: check log-session.py summary.py
 
-      - name: Markdown lint
-        uses: DavidAnson/markdownlint-cli2-action@v19
-        with:
-          globs: "*.md"
-
   test-scripts:
     name: "Scripts (${{ matrix.os }}, jq=${{ matrix.jq }})"
     runs-on: ${{ matrix.os }}

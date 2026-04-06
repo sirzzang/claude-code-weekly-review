@@ -15,6 +15,8 @@ HOOKS_DIR="$CLAUDE_DIR/hooks"
 LOGS_DIR="$CLAUDE_DIR/session-logs"
 SKILL_WEEKLY_DIR="$CLAUDE_DIR/skills/weekly-review"
 SKILL_DEEPDIVE_DIR="$CLAUDE_DIR/skills/prompt-deep-dive"
+SKILL_EXPORT_DIR="$CLAUDE_DIR/skills/export-review"
+REPORTS_DIR="$CLAUDE_DIR/review-reports"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 
 GREEN='\033[0;32m'
@@ -61,7 +63,7 @@ info "python3 found: $(python3 --version)"
 # -------------------------------------------------------
 step "2/5  Creating directories"
 # -------------------------------------------------------
-for dir in "$HOOKS_DIR" "$LOGS_DIR"; do
+for dir in "$HOOKS_DIR" "$LOGS_DIR" "$REPORTS_DIR"; do
     if [ ! -d "$dir" ]; then
         mkdir -p "$dir"
         track_dir "$dir"
@@ -177,6 +179,7 @@ install_skill() {
 
 install_skill "weekly-review" "$SCRIPT_DIR/SKILL.md" "$SKILL_WEEKLY_DIR"
 install_skill "prompt-deep-dive" "$SCRIPT_DIR/SKILL-deep-dive.md" "$SKILL_DEEPDIVE_DIR"
+install_skill "export-review" "$SCRIPT_DIR/SKILL-export-review.md" "$SKILL_EXPORT_DIR"
 
 # -------------------------------------------------------
 # Summary
@@ -214,12 +217,16 @@ echo -e "  ~/.claude/"
 echo -e "  ├── hooks/"
 echo -e "  │   └── log-session.py          ${DIM}# Stop hook${NC}"
 echo -e "  ├── session-logs/                ${DIM}# auto-created on first session${NC}"
+echo -e "  ├── review-reports/              ${DIM}# export-review가 리포트 저장${NC}"
 [ -d "$SKILL_WEEKLY_DIR" ] && \
 echo -e "  ├── skills/weekly-review/"       && \
 echo -e "  │   └── SKILL.md                ${DIM}# weekly review skill${NC}"
 [ -d "$SKILL_DEEPDIVE_DIR" ] && \
 echo -e "  ├── skills/prompt-deep-dive/"    && \
 echo -e "  │   └── SKILL.md                ${DIM}# prompt deep dive skill${NC}"
+[ -d "$SKILL_EXPORT_DIR" ] && \
+echo -e "  ├── skills/export-review/"       && \
+echo -e "  │   └── SKILL.md                ${DIM}# export review skill${NC}"
 echo -e "  └── settings.json               ${DIM}# hook registered here${NC}"
 
 echo
@@ -246,4 +253,8 @@ echo
 [ -d "$SKILL_DEEPDIVE_DIR" ] && \
 echo -e "  ${CYAN}5. 상세 분석 스킬${NC}" && \
 echo -e "     Claude Code에서: ${BOLD}비효율 세션 분석해줘${NC}" && \
+echo
+[ -d "$SKILL_EXPORT_DIR" ] && \
+echo -e "  ${CYAN}6. 리뷰 내보내기 스킬${NC}" && \
+echo -e "     주간 회고 또는 상세 분석 후: ${BOLD}리뷰 저장해줘${NC}" && \
 echo

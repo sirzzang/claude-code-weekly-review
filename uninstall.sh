@@ -6,6 +6,8 @@ HOOKS_DIR="$CLAUDE_DIR/hooks"
 LOGS_DIR="$CLAUDE_DIR/session-logs"
 SKILL_WEEKLY_DIR="$CLAUDE_DIR/skills/weekly-review"
 SKILL_DEEPDIVE_DIR="$CLAUDE_DIR/skills/prompt-deep-dive"
+SKILL_EXPORT_DIR="$CLAUDE_DIR/skills/export-review"
+REPORTS_DIR="$CLAUDE_DIR/review-reports"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 
 GREEN='\033[0;32m'
@@ -34,7 +36,7 @@ echo
 echo -e "${BOLD}=== Claude Code Weekly Review - Uninstall ===${NC}"
 
 # -------------------------------------------------------
-step "1/4  Removing hook script"
+step "1/5  Removing hook script"
 # -------------------------------------------------------
 HOOK_FILE="$HOOKS_DIR/log-session.py"
 if [ -f "$HOOK_FILE" ]; then
@@ -54,7 +56,7 @@ if [ -d "$HOOKS_DIR" ] && [ -z "$(ls -A "$HOOKS_DIR" 2>/dev/null)" ]; then
 fi
 
 # -------------------------------------------------------
-step "2/4  Removing hook from settings.json"
+step "2/5  Removing hook from settings.json"
 # -------------------------------------------------------
 if [ -f "$SETTINGS_FILE" ]; then
     if grep -q "log-session.py" "$SETTINGS_FILE" 2>/dev/null; then
@@ -96,7 +98,7 @@ else
 fi
 
 # -------------------------------------------------------
-step "3/4  Removing skills"
+step "3/5  Removing skills"
 # -------------------------------------------------------
 remove_skill() {
     local name="$1" dir="$2"
@@ -112,6 +114,7 @@ remove_skill() {
 
 remove_skill "weekly-review" "$SKILL_WEEKLY_DIR"
 remove_skill "prompt-deep-dive" "$SKILL_DEEPDIVE_DIR"
+remove_skill "export-review" "$SKILL_EXPORT_DIR"
 
 # Remove skills dir if empty
 SKILLS_DIR="$CLAUDE_DIR/skills"
@@ -122,7 +125,7 @@ if [ -d "$SKILLS_DIR" ] && [ -z "$(ls -A "$SKILLS_DIR" 2>/dev/null)" ]; then
 fi
 
 # -------------------------------------------------------
-step "4/4  Session logs"
+step "4/5  Session logs"
 # -------------------------------------------------------
 LOG_COUNT=0
 if [ -d "$LOGS_DIR" ]; then
@@ -144,6 +147,35 @@ if [ "$LOG_COUNT" -gt 0 ]; then
     fi
 else
     info "No session logs found"
+fi
+
+# -------------------------------------------------------
+step "5/5  Review reports"
+# -------------------------------------------------------
+REPORT_COUNT=0
+if [ -d "$REPORTS_DIR" ]; then
+    REPORT_COUNT=$(find "$REPORTS_DIR" -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+fi
+
+if [ "$REPORT_COUNT" -gt 0 ]; then
+    echo
+    warn "Review reports found: $REPORTS_DIR ($REPORT_COUNT file(s))"
+    read -rp "  Delete all review reports? [y/N] " answer
+    answer="${answer:-N}"
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        rm -rf "$REPORTS_DIR"
+        track_rdir "$REPORTS_DIR"
+        info "Removed: $REPORTS_DIR ($REPORT_COUNT file(s) deleted)"
+    else
+        track_skip "review reports (user kept)"
+        info "Kept: $REPORTS_DIR"
+    fi
+else
+    if [ -d "$REPORTS_DIR" ]; then
+        rmdir "$REPORTS_DIR" 2>/dev/null && track_rdir "$REPORTS_DIR" && info "Removed empty directory: $REPORTS_DIR" || true
+    else
+        info "No review reports found"
+    fi
 fi
 
 # -------------------------------------------------------

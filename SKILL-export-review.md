@@ -173,8 +173,8 @@ mkdir -p ~/.claude/review-reports
 **업로드 절차:**
 
 1. 레지스트리에 등록된 대상이 있으면 선택지 제시, 없으면 직접 입력 요청
-2. DB인 경우 `mcp__notion__API-retrieve-a-database`로 스키마 조회
-3. `mcp__notion__API-post-page`로 페이지 생성
+2. DB인 경우 Notion MCP의 데이터베이스 조회 도구로 스키마 조회
+3. Notion MCP의 페이지 생성 도구로 페이지 생성
 4. 생성된 페이지 URL 안내
 
 ---

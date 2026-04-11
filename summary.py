@@ -58,6 +58,8 @@ def print_summary(sessions: list[dict], date_from: str, date_to: str, verbose: b
     total_tools = sum(s.get("tool_total", 0) for s in sessions)
     total_elapsed = sum(s.get("elapsed_seconds", 0) for s in sessions)
     avg_elapsed = total_elapsed // total_sessions if total_sessions else 0
+    total_active = sum(s.get("active_elapsed_seconds", s.get("elapsed_seconds", 0)) for s in sessions)
+    avg_active = total_active // total_sessions if total_sessions else 0
     avg_turns = total_turns / total_sessions if total_sessions else 0
 
     # Tool usage aggregate
@@ -85,8 +87,8 @@ def print_summary(sessions: list[dict], date_from: str, date_to: str, verbose: b
 
     print(f"Sessions:       {total_sessions}")
     print(f"Total prompts:  {total_turns}")
-    print(f"Total time:     {_fmt(total_elapsed)}")
-    print(f"Avg time/sess:  {_fmt(avg_elapsed)}")
+    print(f"Total time:     {_fmt(total_active)} active / {_fmt(total_elapsed)} wall")
+    print(f"Avg time/sess:  {_fmt(avg_active)} active / {_fmt(avg_elapsed)} wall")
     print(f"Avg turns/sess: {avg_turns:.1f}")
     print(f"Total tool use: {total_tools}")
     print()
@@ -115,8 +117,9 @@ def print_summary(sessions: list[dict], date_from: str, date_to: str, verbose: b
     if problem_sessions:
         print(f"--- High-Turn Sessions (>= {threshold} turns) ---")
         for s in problem_sessions[:HIGH_TURN_DISPLAY_LIMIT]:
+            active_h = s.get('active_elapsed_human', s.get('elapsed_human', '?'))
             print(f"  [{s.get('date')}] {s.get('turn_count')} turns, "
-                  f"{s.get('elapsed_human', '?')}, {s.get('cwd', '?')}")
+                  f"{active_h} active, {s.get('cwd', '?')}")
             if verbose:
                 for i, p in enumerate(s.get("prompts", []), 1):
                     preview = p[:PROMPT_PREVIEW_LENGTH] + ("..." if len(p) > PROMPT_PREVIEW_LENGTH else "")
@@ -126,8 +129,9 @@ def print_summary(sessions: list[dict], date_from: str, date_to: str, verbose: b
     if verbose:
         print("--- All Prompts ---")
         for s in sessions:
+            active_h = s.get('active_elapsed_human', s.get('elapsed_human', '?'))
             print(f"\n  [{s.get('date')}] {s.get('session_id', '?')} "
-                  f"({s.get('elapsed_human', '?')})")
+                  f"({active_h} active)")
             for i, p in enumerate(s.get("prompts", []), 1):
                 print(f"    {i}. {p}")
 

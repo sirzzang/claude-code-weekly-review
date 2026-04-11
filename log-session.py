@@ -65,12 +65,14 @@ def parse_transcript(transcript_path: str) -> dict:
                             tool_counts[block.get("name", "unknown")] += 1
 
     elapsed = _calc_elapsed(timestamps)
+    active_elapsed = _calc_active_elapsed(timestamps)
 
     return {
         "prompts": prompts,
         "tool_usage": dict(tool_counts),
         "tool_total": sum(tool_counts.values()),
         "elapsed_seconds": elapsed,
+        "active_elapsed_seconds": active_elapsed,
         "turn_count": len(prompts),
     }
 
@@ -97,6 +99,23 @@ def _calc_elapsed(timestamps: list[str]) -> int:
     if first and last:
         return max(0, int((last - first).total_seconds()))
     return 0
+
+
+# Gaps longer than this are considered idle (user left the session open).
+IDLE_THRESHOLD_SECONDS = 300  # 5 minutes
+
+
+def _calc_active_elapsed(timestamps: list[str]) -> int:
+    """Calculate active elapsed seconds, excluding idle gaps (>5 min)."""
+    parsed = [t for t in (_parse_ts(ts) for ts in timestamps) if t is not None]
+    if len(parsed) < 2:
+        return 0
+    active = 0
+    for i in range(1, len(parsed)):
+        gap = (parsed[i] - parsed[i - 1]).total_seconds()
+        if gap <= IDLE_THRESHOLD_SECONDS:
+            active += gap
+    return max(0, int(active))
 
 
 def _parse_ts(ts_str: str) -> datetime | None:
@@ -159,6 +178,8 @@ def main():
         "tool_total": metrics["tool_total"],
         "elapsed_seconds": metrics["elapsed_seconds"],
         "elapsed_human": _format_duration(metrics["elapsed_seconds"]),
+        "active_elapsed_seconds": metrics["active_elapsed_seconds"],
+        "active_elapsed_human": _format_duration(metrics["active_elapsed_seconds"]),
     }
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)

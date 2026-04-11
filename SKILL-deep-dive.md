@@ -48,7 +48,8 @@ tail -5 ~/.claude/session-logs/$(date +%Y-%m-%d).jsonl | \
 import json, sys
 for line in sys.stdin:
     s = json.loads(line.strip())
-    print(f\"  [{s['elapsed_human']}] {s['turn_count']}턴 | {s['cwd'].split('/')[-1]} | {s['prompts'][0][:50]}...\")
+    ah = s.get('active_elapsed_human', s['elapsed_human'])
+    print(f\"  [{ah} active] {s['turn_count']}턴 | {s['cwd'].split('/')[-1]} | {s['prompts'][0][:50]}...\")
 "
 ```
 
@@ -64,7 +65,8 @@ for line in sys.stdin:
 |------|-----|
 | 날짜 | ... |
 | 프로젝트 | (cwd의 마지막 2 경로) |
-| 소요 시간 | elapsed_human |
+| 활성 작업 시간 | active_elapsed_human (idle gap 5분+ 제외) |
+| 총 소요 시간 | elapsed_human (참고용) |
 | 턴 수 | turn_count |
 | 도구 사용 | tool_usage (도구별 횟수) |
 
@@ -165,5 +167,5 @@ After:
 - 프롬프트 원문 인용 시 API 키, 비밀번호 등 민감 정보는 `***`로 마스킹한다.
 - "이 프롬프트가 나빴다"가 아니라 "이렇게 쓰면 더 빠르게 끝낼 수 있었다"로 표현한다.
 - 턴 수가 많아도 탐색적 작업(기술 조사, 아키텍처 논의)은 비효율이 아니다. 작업 성격을 고려한다.
-- 세션의 prompts 배열과 집계된 메타데이터(tool_usage, turn_count, elapsed_seconds)만으로 분석한다. raw transcript를 추가로 읽지 않는다. 이 때문에 "3턴째에서 Bash를 6번 호출하며 삽질"과 같은 턴별 도구 분포 진단은 불가능하다. 턴별 분석은 프롬프트 텍스트의 흐름에 집중하고, 도구 사용은 세션 전체 수준에서만 참고한다.
+- 세션의 prompts 배열과 집계된 메타데이터(tool_usage, turn_count, active_elapsed_seconds, elapsed_seconds)만으로 분석한다. raw transcript를 추가로 읽지 않는다. 이 때문에 "3턴째에서 Bash를 6번 호출하며 삽질"과 같은 턴별 도구 분포 진단은 불가능하다. 턴별 분석은 프롬프트 텍스트의 흐름에 집중하고, 도구 사용은 세션 전체 수준에서만 참고한다.
 - 리포트 출력 후, 결과를 저장하고 싶은 사용자를 위해 다음 안내를 추가한다: "이 분석을 저장하려면 `/export-review`를 사용하세요."

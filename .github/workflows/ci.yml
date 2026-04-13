@@ -65,6 +65,7 @@ jobs:
           test -f ~/.claude/skills/prompt-deep-dive/SKILL.md
           test -f ~/.claude/skills/export-review/SKILL.md
           test -f ~/.claude/settings.json
+          test -f ~/.claude/learning-backlog.md
           echo "All files present."
 
       - name: Verify settings.json hook registration
@@ -77,7 +78,7 @@ jobs:
         run: bash install.sh -y
 
       - name: Run uninstall.sh
-        run: printf 'N\nN\n' | bash uninstall.sh
+        run: printf 'N\nN\nN\n' | bash uninstall.sh
 
       - name: Verify uninstall results
         run: |
@@ -86,6 +87,7 @@ jobs:
           test ! -d ~/.claude/skills/weekly-review
           test ! -d ~/.claude/skills/prompt-deep-dive
           test ! -d ~/.claude/skills/export-review
+          test -f ~/.claude/learning-backlog.md  # default N = kept
           echo "All files removed."
 
   test-python:

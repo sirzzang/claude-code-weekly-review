@@ -68,6 +68,19 @@ jobs:
           test -f ~/.claude/learning-backlog.md
           echo "All files present."
 
+      - name: Verify spec includes were expanded
+        run: |
+          for f in ~/.claude/skills/weekly-review/SKILL.md \
+                   ~/.claude/skills/prompt-deep-dive/SKILL.md \
+                   ~/.claude/skills/export-review/SKILL.md; do
+            if grep -q '<!-- include:' "$f"; then
+              echo "FAIL: unexpanded include directive in $f"
+              grep -n '<!-- include:' "$f"
+              exit 1
+            fi
+          done
+          echo "All include directives expanded."
+
       - name: Verify settings.json hook registration
         if: matrix.jq == true
         run: |

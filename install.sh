@@ -131,7 +131,16 @@ fi
 step "5/6  Installing skills"
 # -------------------------------------------------------
 build_skill() {
-    # Replace <!-- include:* --> directives with corresponding spec file content
+    # Replace <!-- include:* --> directives with corresponding spec file content.
+    #
+    # Edge case: 아래 awk에 넘기는 log_spec/backlog_spec 변수는 대응 spec 파일이
+    # SCRIPT_DIR에 없을 때 빈 문자열이 된다 (예: 로컬에서 LOG-SPEC.md를 지운 뒤
+    # 실행, git archive로 일부 파일만 추출한 스트립다운 체크아웃 등). 이 경우
+    # `spec != ""` 가드 때문에 placeholder 라인은 치환되지 않고 그대로 설치된
+    # SKILL.md에 남아 조용한 문서 오염이 발생한다. 정상 clone 상태에서는 일어나지
+    # 않지만, 회귀 방지는 CI에서 잡는다 — .github/workflows/ci.yml의
+    # "Verify spec includes were expanded" 스텝이 설치 결과물에 `<!-- include:`
+    # 문자열이 남아있으면 실패시킨다.
     local src="$1" tmpfile
     tmpfile=$(mktemp)
     local has_include=false

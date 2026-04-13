@@ -8,6 +8,7 @@ SKILL_WEEKLY_DIR="$CLAUDE_DIR/skills/weekly-review"
 SKILL_DEEPDIVE_DIR="$CLAUDE_DIR/skills/prompt-deep-dive"
 SKILL_EXPORT_DIR="$CLAUDE_DIR/skills/export-review"
 REPORTS_DIR="$CLAUDE_DIR/review-reports"
+BACKLOG_FILE="$CLAUDE_DIR/learning-backlog.md"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 
 GREEN='\033[0;32m'
@@ -36,7 +37,7 @@ echo
 echo -e "${BOLD}=== Claude Code Weekly Review - Uninstall ===${NC}"
 
 # -------------------------------------------------------
-step "1/5  Removing hook script"
+step "1/6  Removing hook script"
 # -------------------------------------------------------
 HOOK_FILE="$HOOKS_DIR/log-session.py"
 if [ -f "$HOOK_FILE" ]; then
@@ -56,7 +57,7 @@ if [ -d "$HOOKS_DIR" ] && [ -z "$(ls -A "$HOOKS_DIR" 2>/dev/null)" ]; then
 fi
 
 # -------------------------------------------------------
-step "2/5  Removing hook from settings.json"
+step "2/6  Removing hook from settings.json"
 # -------------------------------------------------------
 if [ -f "$SETTINGS_FILE" ]; then
     if grep -q "log-session.py" "$SETTINGS_FILE" 2>/dev/null; then
@@ -98,7 +99,7 @@ else
 fi
 
 # -------------------------------------------------------
-step "3/5  Removing skills"
+step "3/6  Removing skills"
 # -------------------------------------------------------
 remove_skill() {
     local name="$1" dir="$2"
@@ -125,7 +126,7 @@ if [ -d "$SKILLS_DIR" ] && [ -z "$(ls -A "$SKILLS_DIR" 2>/dev/null)" ]; then
 fi
 
 # -------------------------------------------------------
-step "4/5  Session logs"
+step "4/6  Session logs"
 # -------------------------------------------------------
 LOG_COUNT=0
 if [ -d "$LOGS_DIR" ]; then
@@ -150,7 +151,7 @@ else
 fi
 
 # -------------------------------------------------------
-step "5/5  Review reports"
+step "5/6  Review reports"
 # -------------------------------------------------------
 REPORT_COUNT=0
 if [ -d "$REPORTS_DIR" ]; then
@@ -176,6 +177,26 @@ else
     else
         info "No review reports found"
     fi
+fi
+
+# -------------------------------------------------------
+step "6/6  Learning backlog"
+# -------------------------------------------------------
+if [ -f "$BACKLOG_FILE" ]; then
+    echo
+    warn "Learning backlog found: $BACKLOG_FILE"
+    read -rp "  Delete learning backlog? [y/N] " answer
+    answer="${answer:-N}"
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        rm "$BACKLOG_FILE"
+        track_rm "$BACKLOG_FILE"
+        info "Removed: $BACKLOG_FILE"
+    else
+        track_skip "learning backlog (user kept)"
+        info "Kept: $BACKLOG_FILE"
+    fi
+else
+    info "No learning backlog found"
 fi
 
 # -------------------------------------------------------

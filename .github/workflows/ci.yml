@@ -65,7 +65,21 @@ jobs:
           test -f ~/.claude/skills/prompt-deep-dive/SKILL.md
           test -f ~/.claude/skills/export-review/SKILL.md
           test -f ~/.claude/settings.json
+          test -f ~/.claude/learning-backlog.md
           echo "All files present."
+
+      - name: Verify spec includes were expanded
+        run: |
+          for f in ~/.claude/skills/weekly-review/SKILL.md \
+                   ~/.claude/skills/prompt-deep-dive/SKILL.md \
+                   ~/.claude/skills/export-review/SKILL.md; do
+            if grep -q '<!-- include:' "$f"; then
+              echo "FAIL: unexpanded include directive in $f"
+              grep -n '<!-- include:' "$f"
+              exit 1
+            fi
+          done
+          echo "All include directives expanded."
 
       - name: Verify settings.json hook registration
         if: matrix.jq == true
@@ -77,7 +91,7 @@ jobs:
         run: bash install.sh -y
 
       - name: Run uninstall.sh
-        run: printf 'N\nN\n' | bash uninstall.sh
+        run: printf 'N\nN\nN\n' | bash uninstall.sh
 
       - name: Verify uninstall results
         run: |
@@ -86,6 +100,7 @@ jobs:
           test ! -d ~/.claude/skills/weekly-review
           test ! -d ~/.claude/skills/prompt-deep-dive
           test ! -d ~/.claude/skills/export-review
+          test -f ~/.claude/learning-backlog.md  # default N = kept
           echo "All files removed."
 
   test-python:

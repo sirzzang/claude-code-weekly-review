@@ -17,6 +17,7 @@ SKILL_WEEKLY_DIR="$CLAUDE_DIR/skills/weekly-review"
 SKILL_DEEPDIVE_DIR="$CLAUDE_DIR/skills/prompt-deep-dive"
 SKILL_EXPORT_DIR="$CLAUDE_DIR/skills/export-review"
 REPORTS_DIR="$CLAUDE_DIR/review-reports"
+BACKLOG_FILE="$CLAUDE_DIR/learning-backlog.md"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 
 GREEN='\033[0;32m'
@@ -46,7 +47,7 @@ echo
 echo -e "${BOLD}=== Claude Code Weekly Review - Install ===${NC}"
 
 # -------------------------------------------------------
-step "1/5  Checking prerequisites"
+step "1/6  Checking prerequisites"
 # -------------------------------------------------------
 if ! command -v python3 &>/dev/null; then
     error "python3 not found. Please install Python 3.8+."
@@ -61,7 +62,7 @@ fi
 info "python3 found: $(python3 --version)"
 
 # -------------------------------------------------------
-step "2/5  Creating directories"
+step "2/6  Creating directories"
 # -------------------------------------------------------
 for dir in "$HOOKS_DIR" "$LOGS_DIR" "$REPORTS_DIR"; do
     if [ ! -d "$dir" ]; then
@@ -74,7 +75,7 @@ for dir in "$HOOKS_DIR" "$LOGS_DIR" "$REPORTS_DIR"; do
 done
 
 # -------------------------------------------------------
-step "3/5  Installing hook script"
+step "3/6  Installing hook script"
 # -------------------------------------------------------
 HOOK_DEST="$HOOKS_DIR/log-session.py"
 if [ -f "$HOOK_DEST" ]; then
@@ -95,7 +96,7 @@ else
 fi
 
 # -------------------------------------------------------
-step "4/5  Configuring settings.json"
+step "4/6  Configuring settings.json"
 # -------------------------------------------------------
 HOOK_CMD="python3 ~/.claude/hooks/log-session.py"
 
@@ -127,21 +128,39 @@ else
 fi
 
 # -------------------------------------------------------
-step "5/5  Installing skills"
+step "5/6  Installing skills"
 # -------------------------------------------------------
 build_skill() {
-    # Replace <!-- include:LOG-SPEC --> with LOG-SPEC.md content
+    # Replace <!-- include:* --> directives with corresponding spec file content.
+    #
+    # Edge case: 아래 awk에 넘기는 log_spec/backlog_spec 변수는 대응 spec 파일이
+    # SCRIPT_DIR에 없을 때 빈 문자열이 된다 (예: 로컬에서 LOG-SPEC.md를 지운 뒤
+    # 실행, git archive로 일부 파일만 추출한 스트립다운 체크아웃 등). 이 경우
+    # `spec != ""` 가드 때문에 placeholder 라인은 치환되지 않고 그대로 설치된
+    # SKILL.md에 남아 조용한 문서 오염이 발생한다. 정상 clone 상태에서는 일어나지
+    # 않지만, 회귀 방지는 CI에서 잡는다 — .github/workflows/ci.yml의
+    # "Verify spec includes were expanded" 스텝이 설치 결과물에 `<!-- include:`
+    # 문자열이 남아있으면 실패시킨다.
     local src="$1" tmpfile
     tmpfile=$(mktemp)
-    if grep -q '<!-- include:LOG-SPEC -->' "$src" && [ -f "$SCRIPT_DIR/LOG-SPEC.md" ]; then
+    local has_include=false
+    grep -qE '<!-- include:(LOG-SPEC|BACKLOG-SPEC) -->' "$src" && has_include=true
+    if [ "$has_include" = true ]; then
         awk '
-            /<!-- include:LOG-SPEC -->/ {
-                while ((getline line < spec) > 0) print line
-                close(spec)
+            /<!-- include:LOG-SPEC -->/ && log_spec != "" {
+                while ((getline line < log_spec) > 0) print line
+                close(log_spec)
+                next
+            }
+            /<!-- include:BACKLOG-SPEC -->/ && backlog_spec != "" {
+                while ((getline line < backlog_spec) > 0) print line
+                close(backlog_spec)
                 next
             }
             { print }
-        ' spec="$SCRIPT_DIR/LOG-SPEC.md" "$src" > "$tmpfile"
+        ' log_spec="$([ -f "$SCRIPT_DIR/LOG-SPEC.md" ] && echo "$SCRIPT_DIR/LOG-SPEC.md")" \
+          backlog_spec="$([ -f "$SCRIPT_DIR/BACKLOG-SPEC.md" ] && echo "$SCRIPT_DIR/BACKLOG-SPEC.md")" \
+          "$src" > "$tmpfile"
     else
         cp "$src" "$tmpfile"
     fi
@@ -182,6 +201,18 @@ install_skill "prompt-deep-dive" "$SCRIPT_DIR/SKILL-deep-dive.md" "$SKILL_DEEPDI
 install_skill "export-review" "$SCRIPT_DIR/SKILL-export-review.md" "$SKILL_EXPORT_DIR"
 
 # -------------------------------------------------------
+step "6/6  Installing learning backlog template"
+# -------------------------------------------------------
+if [ -f "$BACKLOG_FILE" ]; then
+    info "Already exists: $BACKLOG_FILE (not overwriting)"
+    track_skip "learning-backlog.md (existing)"
+else
+    cp "$SCRIPT_DIR/learning-backlog.template.md" "$BACKLOG_FILE"
+    track_file "$BACKLOG_FILE"
+    info "Created: $BACKLOG_FILE"
+fi
+
+# -------------------------------------------------------
 # Summary
 # -------------------------------------------------------
 echo
@@ -218,6 +249,7 @@ echo -e "  ├── hooks/"
 echo -e "  │   └── log-session.py          ${DIM}# Stop hook${NC}"
 echo -e "  ├── session-logs/                ${DIM}# auto-created on first session${NC}"
 echo -e "  ├── review-reports/              ${DIM}# export-review가 리포트 저장${NC}"
+echo -e "  ├── learning-backlog.md          ${DIM}# 학습 포인트 누적 기록${NC}"
 [ -d "$SKILL_WEEKLY_DIR" ] && \
 echo -e "  ├── skills/weekly-review/"       && \
 echo -e "  │   └── SKILL.md                ${DIM}# weekly review skill${NC}"
